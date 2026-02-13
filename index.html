@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Monthly Attendance System</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<style>
+body{font-family:Arial;background:#eef2f5;padding:20px;}
+table{border-collapse:collapse;width:100%;background:white;}
+th,td{border:1px solid #aaa;padding:6px;text-align:center;font-size:12px;}
+th{background:#2c3e50;color:white;}
+button{border:none;padding:5px 8px;border-radius:4px;color:white;margin:2px;}
+.present{background:#2ecc71;}
+.absent{background:#e74c3c;}
+.download{background:#3498db;width:100%;padding:8px;margin-top:10px;}
+input{width:100%;padding:6px;margin-bottom:10px;}
+</style>
+</head>
+
+<body>
+
+<h2>Monthly Attendance Sheet</h2>
+
+<input type="date" id="date">
+
+<table id="sheet"></table>
+
+<h3>Subject Wise PDF</h3>
+<div id="pdfButtons"></div>
+
+<button class="download" onclick="downloadMonth()">Download Monthly Excel</button>
+
+<script>
+const students=[
+{usn:"2hn23me002",name:"Anil Hakati"},
+{usn:"2hn23me003",name:"Vinayak Ankali"},
+{usn:"2hn23me006",name:"Kumar Naik"},
+{usn:"2hn23me007",name:"Rushikesh Lipanale"},
+{usn:"2hn23me009",name:"Malik Multani"},
+{usn:"2hn23me012",name:"Prashant Tangadi"},
+{usn:"2hn23me015",name:"Sachin Nashipudi"},
+{usn:"2hn23me016",name:"Saniya Makandar"},
+{usn:"2hn23me017",name:"Santosh Kotinatot"},
+{usn:"2hn23me018",name:"Satish Daddanavar"},
+{usn:"2hn23me019",name:"Shivaraj Mang"},
+{usn:"2hn23me020",name:"Subhash Golabhavi"},
+{usn:"2hn23me021",name:"Sumit Bidari"},
+{usn:"2hn23me022",name:"Supashwanath Sankannavar"},
+{usn:"2hn23me023",name:"Sushant Patil"},
+{usn:"2hn23me024",name:"Umesh Mangawate"},
+{usn:"2hn23me025",name:"Vijay Hiremath"},
+{usn:"2hn23me026",name:"Vijaylaxmi Gavimath"},
+{usn:"2hn23me027",name:"Vijaylaxmi Tuppad"},
+{usn:"2hn24me400",name:"Abhishek Khanapuri"},
+{usn:"2hn24me401",name:"Manjunath Khot"},
+{usn:"2hn24me402",name:"Nilesh Patil"},
+{usn:"2hn24me403",name:"Shivaprasad Chougle"},
+{usn:"2hn24me404",name:"Sunil Gharabude"},
+{usn:"2hn24me405",name:"Suprit Indi"}
+];
+
+const subjects=["MD","HT","TRES","TQM","Major Project","MATLAB","MD Lab","PE","IKS"];
+const table=document.getElementById("sheet");
+
+function buildSheet(){
+ let header="<tr><th>Date</th><th>USN</th><th>Name</th>";
+ subjects.forEach(s=>header+=`<th>${s}</th>`);
+ header+="</tr>";
+ table.innerHTML=header;
+
+ students.forEach(st=>{
+  let row=`<tr><td class="date"></td><td>${st.usn}</td><td>${st.name}</td>`;
+  subjects.forEach(()=>row+=`<td onclick="toggle(this)"></td>`);
+  row+="</tr>";
+  table.innerHTML+=row;
+ });
+}
+buildSheet();
+
+document.getElementById("date").addEventListener("change",()=>{
+ document.querySelectorAll(".date").forEach(d=>{
+  d.innerText=document.getElementById("date").value;
+ });
+});
+
+function toggle(td){
+ td.innerText = td.innerText=="P" ? "A" : "P";
+ td.style.background = td.innerText=="P" ? "#2ecc71" : "#e74c3c";
+ td.style.color="white";
+}
+
+function downloadMonth(){
+ let csv="Date,USN,Name,"+subjects.join(",")+"\n";
+
+ document.querySelectorAll("tr").forEach((row,i)=>{
+  if(i>0){
+   let rowData=[];
+   row.querySelectorAll("td").forEach(c=>rowData.push(c.innerText));
+   csv+=rowData.join(",")+"\n";
+  }
+ });
+
+ const blob=new Blob([csv],{type:"text/csv"});
+ const link=document.createElement("a");
+ link.href=URL.createObjectURL(blob);
+ link.download="monthly_attendance.csv";
+ link.click();
+}
+
+const pdfDiv=document.getElementById("pdfButtons");
+
+subjects.forEach((sub,i)=>{
+ pdfDiv.innerHTML+=`<button class="download" onclick="downloadPDF(${i})">${sub} PDF</button>`;
+});
+
+function downloadPDF(index){
+ const { jsPDF } = window.jspdf;
+ const pdf = new jsPDF();
+
+ pdf.text("Attendance - "+subjects[index],10,10);
+ let y=20;
+ pdf.text("USN        Name        Status",10,y);
+ y+=8;
+
+ document.querySelectorAll("tr").forEach((row,i2)=>{
+  if(i2>0){
+   let cells=row.querySelectorAll("td");
+   let usn=cells[1].innerText;
+   let name=cells[2].innerText;
+   let status=cells[index+3].innerText || "-";
+   pdf.text(`${usn}   ${name}   ${status}`,10,y);
+   y+=7;
+   if(y>280){pdf.addPage();y=20;}
+  }
+ });
+
+ pdf.save(subjects[index]+"_attendance.pdf");
+}
+</script>
+
+</body>
+</html>
